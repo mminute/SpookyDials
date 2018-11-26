@@ -45,21 +45,17 @@ const boolean ON = true;
 const boolean OFF = false;
 
 void set(Dial dials[], boolean onState) {
-  int delay_between_dials = 10;
-
   shuffle(dials, 3);
 
   if (onState) {
     for (int i = 0; i < 3; i++) {
       dials[i].high();
-      delay_between_dials = random(10, 750);
-      delay(delay_between_dials);
+      delay(random(10, 750));
     }
   } else {
     for (int i = 0; i < 3; i++) {
       dials[i].low();
-      delay_between_dials = random(10, 750);
-      delay(delay_between_dials);
+      delay(random(10, 750));
     }
   }
 }
