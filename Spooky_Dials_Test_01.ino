@@ -3,11 +3,18 @@
 // CONSTANTS
 const boolean ON = true;
 const boolean OFF = false;
+const int NUMBER_OF_DIALS = 3;
+// Pins ======================================
 const int BIG_MILLIAMP_DIAL = 9;
 const int SMALL_MILLIAMP_DIAL = 10;
 const int AMP_DIAL = 11;
 const int SONAR_OUTPUT = A0; // Analog In Pin 0
-const int NUMBER_OF_DIALS = 3;
+// ===========================================================================================
+// ===========================================================================================
+// UTILS
+int make_integer_product(float multiplier, int multiplicand) {
+  return int(multiplier * multiplicand + 0.5);
+}
 // ===========================================================================================
 // ===========================================================================================
 // A Single Dial
@@ -18,8 +25,8 @@ const int NUMBER_OF_DIALS = 3;
 class Dial {
   public:
     Dial(int pin, int lowerBound, int upperBound);
-    void high();
-    void low();
+    void high(float distance_multiplier);
+    void low(float distance_multiplier);
 
   private:
     int _pin;
@@ -35,13 +42,16 @@ Dial::Dial(int pin, int lowerBound, int upperBound) {
   _upperBound = upperBound;
 }
 
-void Dial::high() {
-  int high = random((_upperBound - 35), _upperBound);
+// TODO: ADJUST MAX AMPLITUDE PER MULTIPLIER?
+void Dial::high(float distance_multiplier) {
+  int lower_bound_modifier = make_integer_product(distance_multiplier, 35);
+  int high = random((_upperBound - lower_bound_modifier), _upperBound);
   analogWrite(_pin, high);
 }
 
-void Dial::low() {
-  int low = random(_lowerBound, (_lowerBound + 55));
+void Dial::low(float distance_multiplier) {
+  int upper_bound_modifier = make_integer_product(1 - distance_multiplier, 55);
+  int low = random(_lowerBound, (_lowerBound + upper_bound_modifier));
   analogWrite(_pin, low);
 }
 // ===========================================================================================
@@ -51,7 +61,7 @@ void Dial::low() {
 class Dials {
   public:
     Dials(Dial all_dials[]);
-    void set(boolean onState);
+    void set(boolean onState, float multiplier);
 
   private:
     Dial* _dials;
@@ -75,20 +85,19 @@ void Dials::shuffle(Dial * t, int n) {
   }
 }
 
-void Dials::set(boolean onState) {
-//  int high = random((_upperBound - 35), _upperBound);
-//  analogWrite(_pin, high);
+void Dials::set(boolean onState, float multiplier) {
   shuffle(_dials, NUMBER_OF_DIALS);
+  int upper_limit = multiplier * 750;
 
   if (onState) {
     for (int i = 0; i < 3; i++) {
-      _dials[i].high();
-      delay(random(10, 750));
+      _dials[i].high(multiplier);
+      delay(random(10, upper_limit));
     }
   } else {
     for (int i = 0; i < 3; i++) {
-      _dials[i].low();
-      delay(random(10, 750));
+      _dials[i].low(multiplier);
+      delay(random(10, upper_limit));
     }
   }
 }
@@ -106,21 +115,13 @@ float distanceMultiplier(int input_value) {
   return distance/180.0;
 }
 
-int getRandom(float multiplier) {
-  int upperLimit = int(multiplier * 501 + 0.5);
-  Serial.print("upperLimit: ");
-  Serial.println(upperLimit);
+int getDelay(float multiplier) {
+  int upperLimit = make_integer_product(multiplier, 501);
   return random(50, upperLimit);
 }
-
-// TODO: Delete getDelay in favor of gerRandom?
-int getDelay(float multiplier) {
-  float x = getRandom(multiplier);
-//  int y = int(x + 0.5);
-//  Serial.print("getDelay: ");
-//  Serial.println(x);
-  return x;
-}
+// ===========================================================================================
+// ===========================================================================================
+// RUN
 
 // Define the dials and their properties
 Dial dial1(BIG_MILLIAMP_DIAL, 110, 255);
@@ -133,22 +134,13 @@ Dial dial_set[NUMBER_OF_DIALS] = {dial1, dial2, dial3};
 // Create the set of dials to be operated upon
 Dials dials(dial_set);
 
-void setup() {
-  Serial.begin(9600);
-}
+void setup() {}
 
 void loop() {
   float multiplier = distanceMultiplier(analogRead(SONAR_OUTPUT));
-//  Serial.print("multiplier: ");
-//  Serial.println(multiplier);
-//  
-  
-//  Serial.println(analogRead(SONAR_OUTPUT));
-  //  TODO: Read in the value from a range finder
-  //  and set the delays based on this value
-  //  maybe also set a current may analogWrite based on range finder
-  dials.set(ON);
+
+  dials.set(ON, multiplier);
   delay(getDelay(multiplier));
-  dials.set(OFF);
+  dials.set(OFF, multiplier);
   delay(getDelay(multiplier));
 }
