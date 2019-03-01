@@ -25,8 +25,8 @@ int make_integer_product(float multiplier, int multiplicand) {
 class Dial {
   public:
     Dial(int pin, int lowerBound, int upperBound);
-    void high();
-    void low();
+    void high(float distance_multiplier);
+    void low(float distance_multiplier);
 
   private:
     int _pin;
@@ -43,13 +43,15 @@ Dial::Dial(int pin, int lowerBound, int upperBound) {
 }
 
 // TODO: ADJUST MAX AMPLITUDE PER MULTIPLIER?
-void Dial::high() {
-  int high = random((_upperBound - 35), _upperBound);
+void Dial::high(float distance_multiplier) {
+  int lower_bound_modifier = make_integer_product(distance_multiplier, 35);
+  int high = random((_upperBound - lower_bound_modifier), _upperBound);
   analogWrite(_pin, high);
 }
 
-void Dial::low() {
-  int low = random(_lowerBound, (_lowerBound + 55));
+void Dial::low(float distance_multiplier) {
+  int upper_bound_modifier = make_integer_product(1 - distance_multiplier, 55);
+  int low = random(_lowerBound, (_lowerBound + upper_bound_modifier));
   analogWrite(_pin, low);
 }
 // ===========================================================================================
@@ -89,12 +91,12 @@ void Dials::set(boolean onState, float multiplier) {
 
   if (onState) {
     for (int i = 0; i < 3; i++) {
-      _dials[i].high();
+      _dials[i].high(multiplier);
       delay(random(10, upper_limit));
     }
   } else {
     for (int i = 0; i < 3; i++) {
-      _dials[i].low();
+      _dials[i].low(multiplier);
       delay(random(10, upper_limit));
     }
   }
