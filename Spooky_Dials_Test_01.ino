@@ -141,6 +141,8 @@ void loop() {
 
   dials.set(ON, multiplier);
   delay(getDelay(multiplier));
+//  TODO: Update here to remove repetition and make the loop more responsive to the sensor
+//  since the sensor is read once each loop and not updated until after all the delay()'s
   dials.set(OFF, multiplier);
   delay(getDelay(multiplier));
 }
